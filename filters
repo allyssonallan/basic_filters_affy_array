@@ -1,4 +1,4 @@
-#
+#!/bin/R
 # 04/17
 # Program filename filter.R
 # This program is needed to filter affy arrays
