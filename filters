@@ -1,0 +1,41 @@
+#
+# 04/17
+# Program filename filter.R
+# This program is needed to filter affy arrays
+
+# Install and load packages
+#install.packages("data.table") v 1.10.4
+library("data.table")
+
+# Loading files
+raw_map <- fread("~/Documentos/dataset/raw.map")
+annot <- fread("~/Documentos/dataset/annot_hg19.csv")
+quali <- fread("~/Documentos/dataset/Ps.performance.txt")
+
+#Deleting the chr0 and chr23:26 to use as .txt in plink
+#raw_map[[4]][raw_map[[1]] < 1 | raw_map[[1]] > 22] <- raw_map[[4]][raw_map[[1]] < 1 | raw_map[[1]] > 22]*(-1)
+write.table(raw_map[raw_map[[1]] < 1 | raw_map[[1]] > 22], "Documentos/dataset/snplist.txt", quote = F, col.names = F, row.names = F, sep = "\t")
+
+raw_map <- fread("~/Documentos/dataset/raw1.map")
+
+#Insert another column to see PROBEID == RSID
+map2 <- cbind(annot[[1]][match(raw_map[[2]], annot[[3]])], raw_map)
+
+#Filters criteria from SNPolisher analysis
+quali_temp <- quali[quali$CR >= 95]
+quali_temp <- quali_temp[quali_temp$FLD >= 3.6]
+quali_temp <- quali_temp[quali_temp$HetSO >= -0.1]
+quali_temp <- quali_temp[quali_temp$HomRO >= 0.6]
+
+#which is in map2 PROBESETID is in quality PROBESETID
+temp <- map2[[1]] %in% quali_temp[[1]]
+
+#which is not go out
+map2[[5]][!temp] <- map2[[5]][!temp]*(-1)
+
+#create a new mapfile
+map <- subset(map2, select = -1)
+
+#create the file to a specific location
+write.table(map, "~/Documentos/dataset/qc.map", sep = "\t", row.names = F,col.names = F, quote = F)
+
